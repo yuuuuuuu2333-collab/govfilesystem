@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主页 - 智能暸数据分析处理系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>欢迎, {{ session.username }}!</h2>
+        <p>这是一个主页，您可以在这里输入关键字或需求来获取数据。</p>
+        <form method="POST" action="{{ url_for('crawl') }}">
+            <div class="form-group">
+                <label for="keyword">关键字/需求:</label>
+                <input type="text" id="keyword" name="keyword" required>
+            </div>
+            <button type="submit">提交</button>
+        </form>
+        <p><a href="{{ url_for('logout') }}">退出登录</a></p>
+    </div>
+</body>
+</html>

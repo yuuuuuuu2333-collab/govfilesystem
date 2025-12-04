@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Warehouse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            color: #333;
+        }
+        .header a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .filter-container {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-container input[type="text"],
+        .filter-container input[type="date"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex-grow: 1;
+            min-width: 150px;
+        }
+        .filter-container label {
+            font-weight: bold;
+            color: #555;
+        }
+        .filter-container input[type="submit"] {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .filter-container input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            /* border: 1px solid #ddd; */
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            /* background-color: #f2f2f2; */
+        }
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .data-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .data-card h3 {
+            margin-top: 0;
+            color: #007bff;
+            font-size: 1.2em;
+        }
+        .data-card p {
+            margin: 3px 0;
+            color: #555;
+            font-size: 0.9em; /* Make text slightly smaller */
+        }
+        .data-card .snippet-text {
+            max-height: 4.5em; /* Approximately 3 lines of text (1.5em line-height * 3) */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Limit to 3 lines */
+            -webkit-box-orient: vertical;
+        }
+        .data-card a {
+            color: #007bff;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .data-card a:hover {
+            text-decoration: underline;
+        }
+        .data-card .meta-info {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 10px;
+        }
+        .data-card .checkbox-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        .data-card .checkbox-container input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+        .no-data {
+            text-align: center;
+            color: #888;
+            margin-top: 20px;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .back-button:hover {
+            background-color: #5a6268;
+        }
+        .submit-ai-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .submit-ai-button:hover {
+            background-color: #218838;
+        }
+        .loading-indicator {
+            display: none; /* Hidden by default */
+            text-align: center;
+            padding: 15px;
+            font-size: 1.2em;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .loading-indicator::before {
+            content: "处理中，请稍候...";
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingIndicator" class="loading-indicator"></div>
+    <div class="container">
+        <div class="header">
+            <h2>数据仓库</h2>
+            <div>
+                <a href="{{ url_for('dashboard') }}" style="margin-right: 15px;">返回仪表盘</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+
+        <div class="filter-container">
+            <form method="GET" action="{{ url_for('data_warehouse') }}">
+                <input type="text" name="search_keyword" placeholder="搜索关键词、标题或摘要" value="{{ search_keyword }}">
+                <label for="start_date">开始日期:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+                <label for="end_date">结束日期:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+                <input type="submit" value="筛选">
+            </form>
+        </div>
+
+        {% if data %}
+            <form id="aiForm">
+                <div class="card-container">
+                    {% for item in data %}
+                        <div class="data-card">
+                            <div class="checkbox-container">
+                                <input type="checkbox" name="selected_ids" value="{{ item.id }}">
+                            </div>
+                            <h3><a href="{{ item.url }}" target="_blank">{{ item.title }}</a></h3>
+                            <p><strong>关键词:</strong> {{ item.keyword }}</p>
+                            <p class="snippet-text"><strong>摘要:</strong> {{ item.snippet }}</p>
+                            <p class="meta-info">来源: 百度 | 时间: {{ item.timestamp }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                <input type="submit" value="提交给AI模型" class="submit-ai-button">
+            </form>
+        {% else %}
+            <p class="no-data">数据仓库中暂无数据。</p>
+        {% endif %}
+
+        <a href="{{ url_for('dashboard') }}" class="back-button">返回仪表盘</a>
+    </div>
+
+    <script>
+        document.getElementById('aiForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const submitButton = this.querySelector('.submit-ai-button');
+
+            loadingIndicator.style.display = 'block'; // Show loading indicator
+            submitButton.disabled = true; // Disable button to prevent multiple submissions
+
+            const formData = new FormData(this);
+            const selectedIds = [];
+            for (let pair of formData.entries()) {
+                if (pair[0] === 'selected_ids') {
+                    selectedIds.push(pair[1]);
+                }
+            }
+
+            try {
+                const response = await fetch('/process_with_ai', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ selected_ids: selectedIds })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('AI处理完成: ' + result.message);
+                    // Optionally, refresh the page or update content based on result
+                    window.location.reload(); // Reload to see updated reports
+                } else {
+                    const errorData = await response.json();
+                    alert('AI处理失败: ' + errorData.error);
+                }
+            } catch (error) {
+                console.error('Error during AI submission:', error);
+                alert('提交AI模型时发生错误。');
+            } finally {
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+                submitButton.disabled = false; // Re-enable button
+            }
+        });
+    </script>
+</body>
+</html>
